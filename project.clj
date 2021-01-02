@@ -14,7 +14,8 @@
 
   :min-lein-version "2.9.0"
 
-  :source-paths ["src/clj" "src/cljs"]
+  :source-paths ["src/clj" "src/cljs" "src/cljc"]
+  :test-paths ["tests/cljc"]
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled" "target"]
 
