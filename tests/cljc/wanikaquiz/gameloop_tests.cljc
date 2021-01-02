@@ -3,4 +3,5 @@
    [clojure.test :refer :all]
    [wanikaquiz.gameloop :as gameloop]))
 
-(deftest testing-ci (testing "testing-ci" (is (= (gameloop/return-false) true))))
+(deftest testing-ci (testing "testing-ci"
+                      (is (= (gameloop/return-false) false))))
