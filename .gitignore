@@ -117,3 +117,15 @@ dist
 
 # Deleting sensitive informations:
 .git.bfg-report
+
+# Shadow CLJS
+.shadow-cljs/
+shadow-cljs.edn
+resources/public/js/
+
+# Leiningen
+.lein-failures
+
+# Clojure (I guess?)
+target/
+package-lock.json
