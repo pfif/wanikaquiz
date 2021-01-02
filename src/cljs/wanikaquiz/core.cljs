@@ -4,9 +4,7 @@
    [re-frame.core :as re-frame]
    [wanikaquiz.events :as events]
    [wanikaquiz.views :as views]
-   [wanikaquiz.config :as config]
-   ))
-
+   [wanikaquiz.config :as config]))
 
 (defn dev-setup []
   (when config/debug?
