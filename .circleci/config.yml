@@ -39,4 +39,5 @@ jobs:
           key: v1-dependencies-{{ checksum "project.clj" }}
 
       # run tests!
+      - run: lein cljfmt check
       - run: lein test
