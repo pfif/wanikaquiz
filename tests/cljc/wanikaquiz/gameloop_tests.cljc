@@ -4,4 +4,4 @@
    [wanikaquiz.gameloop :as gameloop]))
 
 (deftest testing-ci (testing "testing-ci"
-                      (is (= (gameloop/return-false) false))))
+                      (is (= (gameloop/return-false) true))))
