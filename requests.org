@@ -1,0 +1,5 @@
+* Wanikani requests :verb:
+GET https://api.wanikani.com/v2/
+Authorization: Bearer {{(verb-var wanikani-token)}}
+** Read user
+GET user/

@@ -1,61 +1,132 @@
-from json import load
+from json import load, dumps
+from copy import deepcopy
 from random import choices, choice
 import os
+import asyncio
+import websockets
 
 subjects = load(open("subjects.json", "r"))
-NUMBER_OF_SUBJECT = 3
-chosen_subjects = choices(subjects, k=NUMBER_OF_SUBJECT)
+NUMBER_OF_SUBJECT = 25
+
+MEANING = "Meaning"
+READING = "Reading"
+
 
 def printMeaning(subject):
     print("\nMeaning")
     for mean in subject["meanings"]:
         print(mean["meaning"])
 
+
 def printReading(subject):
     print("\nReading")
     for mean in subject["readings"]:
         print(mean["reading"])
 
-helene = 0
-florent = 0
-robin = 0
 
-def printScore():
-    print("Helene: {}".format(helene))
+def printScore(score):
+    print("Helene: {}".format(score["helene"]))
     print("Robin: Not counting score")
-    print("Florent: {}".format(florent))
+    print("Florent: {}".format(score["florent"]))
 
-for i, subject in enumerate(chosen_subjects):
-    question = choice([
-        ("Meaning", printMeaning, printReading),
-        ("Reading", printReading, printMeaning)
-    ])
 
-    os.system("clear")
-    print("{}/{}".format(i, NUMBER_OF_SUBJECT))
-    printScore()
-    print()
+def computeUIState(state, question, show_answer):
+    uistate = deepcopy(state)
+    del uistate["score"]["robin"]
+    del uistate["chosen_subjects"]
 
-    print(subject["characters"])
-    print(question[0])
-    input()
+    subject = currentSubject(state)
+    uistate["question"] = question
+    uistate["kanji"] = subject["characters"]
 
-    print("Answer")
-    question[1](subject)
-    print()
+    def standardizeAnswers(answers):
+        return [{
+            "characters": answer["reading"] if "reading" in answer else answer["meaning"],
+            "primary": answer["primary"]
+        } for answer in answers]
 
-    print("Additional information")
-    question[2](subject)
-    print()
+    def setAnswers(mainAnswers=None, additionalDetailsHeader=None, additionalDetails=None):
+        uistate["main_answers"] = standardizeAnswers(mainAnswers) if mainAnswers is not None else None
+        uistate["additionalDetails"] = {
+            "header": additionalDetailsHeader,
+            "body": standardizeAnswers(additionalDetails)
+           } if additionalDetails is not None and additionalDetailsHeader is not None else None
 
-    winner = input("Who won (f/h):")
+    if show_answer:
+        if question == MEANING:
+            setAnswers(subject["meanings"], READING, subject["readings"])
+        elif question == READING:
+            setAnswers(subject["readings"], MEANING, subject["meanings"])
+    else:
+        setAnswers()
 
-    if winner == 'h':
-        helene = helene+1
-    elif winner == 'f':
-        florent = florent + 1
-    elif winner == 'r':
-        robin = robin + 1
+    return uistate
 
-with open("answer", "w") as f:
-    f.write("Helene:{}, Florent: {}, Robin: {}".format(helene, florent, robin))
+
+async def sendUIState(websocket, uistate):
+    await websocket.send(dumps(uistate))
+
+
+def currentSubject(state):
+    return state["chosen_subjects"][state["pointer"]]
+
+
+async def game(websocket, path):
+    state = {
+        "score": {
+            "helene": 0,
+            "florent": 0,
+            "robin": 0
+        },
+        "chosen_subjects": choices(subjects, k=NUMBER_OF_SUBJECT),
+        "pointer": 0,
+    }
+    while state["pointer"] < len(state["chosen_subjects"]):
+        subject = currentSubject(state)
+        # Show question
+        question = choice([(MEANING, printMeaning, printReading),
+                           (READING, printReading, printMeaning)])
+
+        await sendUIState(websocket, computeUIState(state, question[0], False))
+
+        os.system("clear")
+        print("{}/{}".format(state["pointer"], NUMBER_OF_SUBJECT))
+        printScore(state["score"])
+        print()
+
+        print(subject["characters"])
+        print(question[0])
+        input()
+
+        # Show answer
+        await sendUIState(websocket, computeUIState(state, question[0], True))
+        print("Answer")
+        question[1](subject)
+        print()
+
+        print("Additional information")
+        question[2](subject)
+        print()
+
+        # Input winner
+        winner = input("Who won (f/h):")
+
+        if winner == 'h':
+            state["score"]["helene"] = state["score"]["helene"] + 1
+        elif winner == 'f':
+            state["score"]["florent"] = state["score"]["florent"] + 1
+        elif winner == 'r':
+            state["score"]["robin"] = state["score"]["robin"] + 1
+
+        state["pointer"] = state["pointer"] + 1
+
+    with open("answer", "w") as f:
+        f.write("Helene:{}, Florent: {}, Robin: {}".format(
+            state["score"]["helene"], state["score"]["florent"],
+            state["score"]["robin"]))
+
+
+start_server = websockets.serve(game, "localhost", 8765)
+
+asyncio.get_event_loop().run_until_complete(start_server)
+asyncio.get_event_loop().run_forever()
