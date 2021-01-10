@@ -20,7 +20,7 @@
                 :name "1 player (one missing username)",
                 :initialdb {},
                 :arguments {:players [{:username "" :apikey "xxxx"}]},
-                :expectedEffects {:db {:wanikaquiz.gameloop/error "username missing"}}}
+                :expectedEffects {:db {:wanikaquiz.gameloop/error "Uncomform player"}}}
                {:event :start-game,
                 :name "1 player (one without api key)",
                 :initialdb {},
