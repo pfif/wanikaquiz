@@ -15,9 +15,12 @@
                 :initialdb {},
                 :arguments {:players [{:username "pfif" :apikey "xxxx"} {:username "friend" :apikey "yyyy"}]},
                 :expectedEffects {:db {:wanikaquiz.gameloop/players [{:username "pfif" :apikey {:key "xxxx" :verified? :inprogress}}
-                                                                     {:username "friend" :apikey {:key "yyyy" :verified? :inprogress}}]}}}
+                                                                     {:username "friend" :apikey {:key "yyyy" :verified? :inprogress}}]}
+                                  :fx [[:wanikaquiz.gameloop/get-and-furnish-players [{:username "pfif" :apikey "xxxx"}
+                                                                                      {:username "friend" :apikey "yyyy"}]]
+                                       [:dispatch [:wanikaquiz.gameloop/player-list-completed]]]}}
                {:event :start-game,
-                :name "1 player (one missing username)",
+                :name "1 player (one missing username)", ;; TODO Should filter out incomplete player instead of erroring
                 :initialdb {},
                 :arguments {:players [{:username "" :apikey "xxxx"}]},
                 :expectedEffects {:db {:wanikaquiz.gameloop/error "Uncomform player"}}}
